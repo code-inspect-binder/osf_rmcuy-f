@@ -1,0 +1,242 @@
+---
+title: "Stan_results"
+author: "Alan"
+date: "1 Maerz 2019"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(fig.width=12, fig.height=8) 
+knitr::opts_chunk$set(warning=FALSE) 
+
+
+
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(gridExtra)
+library(knitr)
+library(rstan)
+library(DT)
+
+
+ind_res_tabs <- function(stan_model_list){
+  res <- NULL
+  for(i in 1:nrow(results)){
+    res[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=" "), " \n",
+    "```{r individual_res",i,", results = 'asis'}", "\n",
+    "ind_levels<-extract_individual_levels(stan_model_list[[",i,"]],ind_names[!is.na(mean_result[",i,",])]);
+  
+colnames(ind_levels)<-c('L','M','H','paramter','ID')
+ind_levels %>% mutate(paramter = factor(paramter, levels = levels(factor(paramter))[c(7,8,3,4,6,5,2,1)] )) %>%
+ ggplot(aes(x=ID,y=M))+geom_point()+
+  geom_linerange(aes(ymin=L,ymax=H))+coord_flip()+
+  facet_grid(.~paramter,scales  = 'free')+
+  #geom_hline(data=pop_lvl,aes(yintercept=Median),color='blue',linetype='dashed')+
+  labs(y='Regression parameters')", "\n",
+    '```', '\n\n')
+  }
+  return(res)
+}
+
+
+fit_tabs <- function(ind_res, mean_result,data_stan,fake_data_list){
+  res <- NULL
+  for(i in 1:nrow(results)){
+    res[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=" "), " \n",
+    "```{r, results = 'asis'}", "\n",
+    "plot_effects(ind_res[[",i,"]],mean_result[",i,",],data_stan,fake_data_list[[",i,"]])", "\n",
+    '```', '\n\n')
+  }
+  return(res)
+}
+
+include_model=1
+make.tabs_prediction <- function(fake_data_list){
+  res <- NULL
+  for(i in 1:nrow(results)){#!!!!1:nrow(results)
+    data = fake_data_list[[i]]
+    res[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=" "), " \n",
+    "```{r pred",i,", results = 'asis'}", "\n",'include_model=1;ind_fits=ind_res[[',i,']];data=data.frame(fake_data_list[[',i,']]);',
+    'source("Fig_1F.r");',
+    'source("Figure_2A-D.r");',
+     '\n',
+    '```', '\n\n')
+  }
+  return(res)
+}
+
+
+
+trace_tabs <- function(stan_model_list){
+  res3 <- NULL
+  for(i in 1:nrow(results)){
+    res3[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=' '), ' \n',
+    '```{r trace',i,', results = "asis",results="hide", message=FALSE, warning=FALSE}', '\n',
+                      'traceplot(stan_model_list[[',i,']],pars=parent_names)', '\n',
+                      '```', '\n\n')
+  }
+  return(res3)
+}
+
+
+
+
+trace_tabs_ind <- function(stan_model_list){
+  res2 <- NULL
+  for(i in 1:nrow(results)){
+    res2[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=' '), ' \n',
+    '```{r trace_ind',i,', results = "asis",results="hide", message=FALSE, warning=FALSE}', '\n',
+          'vars=rep(c("var_own","var_social","distance_weight","stay_intercept", "stay_dist","prox_weight","copy_intercept", "copy_dist")[!is.na(mean_result[',i,',])],each=3);',
+          'indexs=rep(sample(unique(data_stan$ID),size=3),length(vars));',
+             'vars2=apply(rbind(vars,"[",indexs,"]"),2,paste0,collapse ="");',
+                      'traceplot(stan_model_list[[',i,']],pars=vars2)', '\n',
+                      '```', '\n\n')
+  }
+  return(res2)
+}
+
+
+
+
+
+output_tabs <- function(stan_model_list){
+  res4 <- NULL
+  for(i in 1:nrow(results)){
+    res4[i] <- paste0( '###  ', paste0(with(data.frame(t(rbind( names(results[,1:4]),c(results[i,1:4]),rep("\n",4)))), paste0(X1,X2,X3),rep("\n",4)),collapse=" "), " \n",
+    "```{r text",i,", results = 'asis'}", "\n",
+                      'datatable(round(summary(stan_model_list[[',i,']],pars=parent_names[!is.na(result[',i,',])])$summary,2))', "\n",
+                      '```', '\n\n')
+  }
+  return(res4)
+}
+#
+
+#plot_effects(result[16,],data_stan,fake_data_list[[16]])
+#traceplot(stan_model_list[[16]],pars=colnames(result)[!is.na(result[16,])])
+#data=data.frame(fake_data_list[16]);source("run_plot.R");source("Figure 3.R")
+
+```
+
+
+
+```{r show}
+print(name)
+
+datatable(results, rownames = FALSE, filter="top", options = list(pageLength = 8, scrollX=T) )
+
+loos
+
+
+#for(i in 1:nrow(results)){
+#  datatable(print(stan_model_list[[i]],pars=colnames(result)[!is.na(result[i,])]))}
+
+```
+
+
+```{r showplot}
+
+
+deltas = (-c(results$looic[results$distance_Weighting==1]-results$looic[results$distance_Weighting==0],
+results$looic[results$peer_proximity==1]-  results$looic[results$peer_proximity==0],
+results$looic[results$staying_probability==1]-  results$looic[results$staying_probability==0],
+results$looic[results$copying_probability==1]-  results$looic[results$copying_probability==0]))
+
+deltas_names= c(rep("Confirmation",8),rep("Proximity",8),rep("Stay",8),rep("Copy",8))
+
+
+
+
+par(cex.lab=1.5, cex.axis=1.5, las=1, lend=1, yaxs='i',mfrow=c(1,1))#, xaxs='i'
+plot(0, type='n', ylim=c(0.3,5), xlim=c(min(deltas,na.rm=T)-10,max(deltas,na.rm=T)+10), axes=FALSE,xlab='',ylab='')
+axis(1, at=seq(round(min(deltas,na.rm=T),-1),max(deltas,na.rm=T),10))#, labels=FALSE
+cols<-c("#1E90FF","#CD2626","#56ae6c","#ac9c3d","grey80")
+level_names = unique(deltas_names)
+	#individual data points
+	for (k in 1:4){
+	  k1 = rep(5-k,8)
+		# summary stats per treatment
+	y<-mean(deltas[deltas_names==level_names[k]], na.rm=T)
+	
+	w<-summary(deltas[deltas_names==level_names[k]])
+	IQR<-w[5]-w[2]
+	se<- sd(deltas[deltas_names==level_names[k]])/sqrt(length(deltas[deltas_names==level_names[k]]))	
+	#interquartile
+	rect(w[2],k1-0.3,w[5],k1+0.3,col=adjustcolor(cols[k], alpha=0.1))
+	arrows(w[2]-1.5*IQR,k1,w[2],k1, code=0)
+	arrows(w[5],k1,w[5]+1.5*IQR,k1, code=0)
+	
+	#median
+	arrows(w[3], k1-0.3, w[3], k1+0.3, lwd=5, code=0)
+	
+	
+	
+		points(deltas[deltas_names==level_names[k]],k1, pch=16, col=cols[k])
+		abline(v=0, , col = "lightgray",lty=2,cex=2)
+
+	}
+
+
+
+
+
+```
+
+## Results (click through tabs to inspect models with or without specific strategies)
+
+
+
+## Predictions: {.tabset .tabset-fade}
+`r paste(knit(text = make.tabs_prediction(fake_data_list)))`
+Upper panel: The colored bars indicate the avarage snesitivity of each individual. The red and green dots the average sensitivity of all choices for the empirical data and model predicitons respectively.  
+
+## The fitted paramters: {.tabset .tabset-fade}
+`r paste(knit(text = fit_tabs(ind_res, mean_result,data_stan,fake_data_list)))`
+
+The fitted paramters with black lines indicating the fittings. The red lines ind the upper panels indicate the staying and copying probabilities including the baysian inference process.
+
+
+
+
+
+## The summary: {.tabset .tabset-fade}
+`r paste(knit(text = output_tabs(stan_model_list)))`
+
+
+
+
+
+## The markow Chains: {.tabset .tabset-fade}
+`r paste(knit(text = trace_tabs(stan_model_list)))`
+
+
+## The individual markow Chains: {.tabset .tabset-fade}
+`r paste(knit(text = trace_tabs_ind(stan_model_list)))`
+
+
+## The individual results: {.tabset .tabset-fade}
+`r paste(knit(text = ind_res_tabs(stan_model_list)))`
+
+
+
+</div>
+
+
+### The Stan Code: 
+```{r show2}
+
+print(cat(with_wighting_and_stay_model))
+"The MCMC chains showing the posterior probabilities if the paramters. If the different chains are laying above each other they converged (which is good).
+
+
+
+
+
+
+
+"
+
+```
+

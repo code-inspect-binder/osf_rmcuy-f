@@ -1,0 +1,35 @@
+
+This file contains th description of the variables in c-BEAST-fullbatch-24-04.csv:
+
+- 'playerNr' : the id of the participant
+
+- 'period' : the trial number from 1:40
+
+- 'nAnimals' : true number of animals 
+
+- 'animalName' : which animal was on the stimulus 
+
+- 'treatment' : the treatment (details see Supplementary Information)
+
+- 'firstEstimate' : the initial estimate of the participant
+
+- 'secondEstimate' :  the revised estimate of the participant
+
+- 'p1' : observed estimate of peer 1
+
+- 'p2' : observed estimate of peer 2
+
+- 'p3' : observed estimate of peer 3
+
+- 'meanP' : mean of all peer estimates
+
+- 'varP' :  variance of all peer estimates
+
+- 'skewP' :  skewness of all peer estimates
+
+
+- 'age' : age of participant
+
+- 'gender' : gender of participant (with 1=male, 2=male, 3=other)
+
+- 'SocInfo' : adjustment towards the mean peer estimates
